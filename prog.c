@@ -9,11 +9,11 @@ int main(int argc, char **argv) {
   int error;
 
   int i, disable_owner_validation = 0;
-  char *repo_path = NULL, *flag = "--disable-owner-validation";
+  char *repo_path = NULL;
 
   for (i = 1; i < argc; i++) {
     char *arg = argv[i];
-    if (strstr(arg, flag) == arg) {
+    if (strcmp(arg, "--disable-owner-validation") == 0) {
       disable_owner_validation = 1;
     } else {
       repo_path = arg;
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 
   git_libgit2_init();
 
-  error = git_repository_discover(&repository_path, argv[1], 0, NULL);
+  error = git_repository_discover(&repository_path, repo_path, 0, NULL);
   if (error != 0) {
     const git_error *err = git_error_last();
     fprintf(stderr, "failed to discover repository: %s\n", err->message);
