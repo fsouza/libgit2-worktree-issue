@@ -3,14 +3,37 @@
 #include <git2/repository.h>
 #include <git2/sys/repository.h>
 #include <stdio.h>
+#include <string.h>
 
 int main(int argc, char **argv) {
-  if (argc < 2) {
-    printf("usage: %s <repo>\n", argv[0]);
+  int error;
+
+  int i, disable_owner_validation = 0;
+  char *repo_path = NULL, *flag = "--disable-owner-validation";
+
+  for (i = 1; i < argc; i++) {
+    char *arg = argv[i];
+    if (strstr(arg, flag) == arg) {
+      disable_owner_validation = 1;
+    } else {
+      repo_path = arg;
+    }
+  }
+
+  if (repo_path == NULL) {
+    fprintf(stderr, "usage: %s [--disable-owner-validation] <repo>\n", argv[0]);
     return 2;
   }
 
-  int error;
+  if (disable_owner_validation) {
+    git_libgit2_opts(GIT_OPT_SET_OWNER_VALIDATION, 0);
+    if (error != 0) {
+      const git_error *err = git_error_last();
+      fprintf(stderr, "failed to disable owner validation: %s\n", err->message);
+      return 1;
+    }
+  }
+
   git_repository *repo;
   git_buf repository_path = {NULL};
 
@@ -19,7 +42,7 @@ int main(int argc, char **argv) {
   error = git_repository_discover(&repository_path, argv[1], 0, NULL);
   if (error != 0) {
     const git_error *err = git_error_last();
-    printf("ERROR: %s\n", err->message);
+    fprintf(stderr, "failed to discover repository: %s\n", err->message);
     return 1;
   }
 
@@ -27,7 +50,7 @@ int main(int argc, char **argv) {
 
   if (error != 0) {
     const git_error *err = git_error_last();
-    printf("ERROR: %s\n", err->message);
+    fprintf(stderr, "failed to open repository: %s\n", err->message);
     return 1;
   }
 
